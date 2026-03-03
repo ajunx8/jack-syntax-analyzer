@@ -60,31 +60,6 @@ export class JackTokenizer {
     // gets next token from input, and makes it the current token.
     // should only be called if hasMoreTokens is true
     advance() {
-        // lets say we move forward no matter what
-        // how?
-        // then we can analyze the token.
-
-        // how do we move forward? 
-        // 1. ignore all comments and white space
-        // 2. go until it matches a keyword or one of the lexical elements?
-        // sure
-
-        // lexicalElements: {
-        // keyword: ['class', 'constructor', 'function', 'method', 'field', 'static', 'var', 'int', 'char', 'boolean', 'void', 'true', 'false', 'null', 'this', 'let', 'do', 'if', 'else', 'while', 'return'],
-        // symbol: ['{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~'],
-        // integerConstant: Array.from({ length: 32768 }).map((_, i) => i),
-        // stringConstant: "", // '"' A Sequence of characters not including double quote or newline '"'
-        // identifier: RegExp("/^[a-zA-Z_].*[a-zA-Z0-9_]/"), // Sequence of letters, digits, and underscore, not starting with a digit
-        // },
-
-
-        // catch the first character,
-        // if its a keyword, stop 
-        // if its a symbol, stop
-        // if its a letter or underscore, keep going until we hit a symbol, double-quote, space, new-line(/n) or comment char(//, /**, /*) then stop
-        // if its a double-quote, keep going until another double-quote, then stop
-        // if its a number, keep going until we dont see a number then stop
-
         let curChar = this.contents[this.cursor]
         if (curChar === undefined) {
             throw new Error("curChar is undefined")
