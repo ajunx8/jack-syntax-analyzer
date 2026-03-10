@@ -28,8 +28,8 @@ export class CompilationEngine {
         if (this.tokenizer.hasMoreTokens()) {
             this.tokenizer.advance()
 
-            if (this.tokenizer.tokenType() === 'KEYWORD') {
-                const keyword = this.tokenizer.keyWord()
+            if (this.tokenizer.tokenType === 'KEYWORD') {
+                const keyword = this.tokenizer.curToken
                 if (keyword === 'class') {
                     this.addTag(keyword)
                 } else {
@@ -42,10 +42,10 @@ export class CompilationEngine {
 
         if (this.tokenizer.hasMoreTokens()) {
             this.tokenizer.advance()
-            const tokenType = this.tokenizer.tokenType()
+            const tokenType = this.tokenizer.tokenType
 
             if (tokenType === 'IDENTIFIER') {
-                const identifier = this.tokenizer.identifier()
+                const identifier = this.tokenizer.curToken
                 this.addTag(identifier)
             } else {
                 throw new Error(`token should be type: 'IDENTIFIER', recieved ${tokenType}`)
@@ -55,8 +55,8 @@ export class CompilationEngine {
         if (this.tokenizer.hasMoreTokens()) {
             this.tokenizer.advance()
 
-            if (this.tokenizer.tokenType() === 'SYMBOL') {
-                const symbol = this.tokenizer.symbol()
+            if (this.tokenizer.tokenType === 'SYMBOL') {
+                const symbol = this.tokenizer.curToken
                 if (symbol === '{') {
                     this.addTag(symbol)
                 } else {
@@ -69,10 +69,10 @@ export class CompilationEngine {
 
         if (this.tokenizer.hasMoreTokens()) {
             this.tokenizer.advance()
-            const tokenType = this.tokenizer.tokenType()
+            const tokenType = this.tokenizer.tokenType
 
             if (tokenType === 'IDENTIFIER') {
-                const identifier = this.tokenizer.identifier()
+                const identifier = this.tokenizer.curToken
                 this.addTag(identifier)
             } else {
                 throw new Error(`token should be type: 'IDENTIFIER', recieved ${tokenType}`)

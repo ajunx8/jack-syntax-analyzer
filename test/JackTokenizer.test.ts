@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi, test} from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { JackTokenizer } from "../src/JackTokenizer.js";
 
 // start of the simplest happy path. Each subsequent test should be a little harder
@@ -22,17 +22,33 @@ it('tokenizes "class Main"', () => {
         tokenizer.advance()
         i++
     }
-    
+
     expect(tokenizer.curToken).toBe('Main')
     expect(tokenizer.hasMoreTokens()).toBe(false)
 })
 
-describe('handle ignored characters', () => {
-    it.skip('handle single space', () => {
-        const contents = " "
-        const tokenizer = new JackTokenizer()
-    })
+it('handle single space', () => {
+    const tokenizer = new JackTokenizer(" ")
+    expect(tokenizer.hasMoreTokens()).toBe(false)
+})
+
+it('handle content with comments', () => {
+    const contents = `class Main() { // comment to end of line
+}
+/* This is a
+multi-line
+comment */
+/** Comments for API
+docs */`
+    const tokenizer = new JackTokenizer(contents)
+
+    let i = 0
+    while (i < 6) {
+        tokenizer.advance()
+        i++
+    }
+    expect(tokenizer.curToken).toBe('}')
+    expect(tokenizer.hasMoreTokens()).toBe(false)
 })
 
 
-const fileContents = "class Main() {} // comment to end of line\n/*This is a\nmulti-line\ncomment*/\n/** Comments for API\ndocs*/"

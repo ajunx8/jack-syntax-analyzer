@@ -6,7 +6,12 @@ test('it successfully handles a valid file', async () => {
     const inputFile = 'test/project10-jack-test-files/test-file-Main.jack'
     const main = new Main(inputFile)
     await main.run()
-    expect(main.jackFiles).toContain("/Users/adriangreksa/Projects/03-home/nand2tetris-resources/syntax-analyzer/test/project10-jack-test-files/test-file-Main.jack")
+
+    const expectedJackFiles = [
+        "/Users/adriangreksa/Projects/03-home/nand2tetris-resources/jack-syntax-analyzer/test/project10-jack-test-files/test-file-Main.jack"
+    ]
+
+    expect(main.jackFiles).toEqual(expectedJackFiles)
 })
 
 test('it successfully handles a valid directory', async () => {
@@ -15,9 +20,9 @@ test('it successfully handles a valid directory', async () => {
     await main.run()
 
     const expectedJackFiles = [
-        "/Users/adriangreksa/Projects/03-home/nand2tetris-resources/syntax-analyzer/test/project10-jack-test-files/Square/Main.jack",
-        "/Users/adriangreksa/Projects/03-home/nand2tetris-resources/syntax-analyzer/test/project10-jack-test-files/Square/Square.jack",
-        "/Users/adriangreksa/Projects/03-home/nand2tetris-resources/syntax-analyzer/test/project10-jack-test-files/Square/SquareGame.jack"
+        "/Users/adriangreksa/Projects/03-home/nand2tetris-resources/jack-syntax-analyzer/test/project10-jack-test-files/Square/Main.jack",
+        "/Users/adriangreksa/Projects/03-home/nand2tetris-resources/jack-syntax-analyzer/test/project10-jack-test-files/Square/Square.jack",
+        "/Users/adriangreksa/Projects/03-home/nand2tetris-resources/jack-syntax-analyzer/test/project10-jack-test-files/Square/SquareGame.jack"
     ]
     expect(main.jackFiles).toEqual(expectedJackFiles)
 })

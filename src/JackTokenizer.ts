@@ -1,52 +1,53 @@
 export class JackTokenizer {
-    contents: string = "";
+    readonly contents: string = "";
     cursor: number = 0;
-    curToken: string = '';
+    curToken: string | undefined = undefined;
+    tokenType: "KEYWORD" | "SYMBOL" | "IDENTIFIER" | "INT_CONST" | "STRING_CONST" | undefined = undefined;
 
     constructor(contents: string) {
         this.contents = contents
     }
 
-    // moves cursor to the end of the comment
     skipIgnoredCharacters(): void {
-        // check for largest number of characters first i.e comments
-        if (this.contents.slice(this.cursor, this.cursor + 3) === "/**") {
-            const endCommentIdx = this.contents.indexOf("*/", this.cursor)
-            if (endCommentIdx >= this.cursor) {
-                this.cursor += endCommentIdx + 5
-            } else {
-                throw new Error("syntaxError: end comment characters not found")
-            }
-            this.skipIgnoredCharacters()
-        }
-
-        if (this.contents.slice(this.cursor, this.cursor + 2) === "/*") {
-            const endCommentIdx = this.contents.indexOf("*/", this.cursor)
-            if (endCommentIdx >= this.cursor) {
-                this.cursor += endCommentIdx + 4
-            } else {
-                throw new Error("syntaxError: end comment characters not found")
-            }
-            this.skipIgnoredCharacters()
-        }
-
-        if (this.contents.slice(this.cursor, this.cursor + 2) === "//") {
-            const endLineIdx = this.contents.indexOf("\n", this.cursor)
-            if (endLineIdx >= this.cursor) {
-                this.cursor += endLineIdx + 4
-            } else {
-                throw new Error("syntaxError: end-line character not found")
-            }
-            this.skipIgnoredCharacters()
-        }
-
-        if (this.contents[this.cursor] === " ") {
-            let isSpace = true
-            while (isSpace) {
+        // space or newline
+        if (this.contents[this.cursor] === " " || this.contents[this.cursor] === "\n") {
+            let ignore = true
+            while (ignore) {
                 this.cursor++
-                isSpace = this.contents[this.cursor] === " "
+                ignore = this.contents[this.cursor] === " " || this.contents[this.cursor] === "\n"
             }
             this.skipIgnoredCharacters()
+        }
+        
+        else if (this.contents.slice(this.cursor, this.cursor + 3) === "/**") {
+            const endCommentIdx = this.contents.indexOf("*/", this.cursor)
+            if (endCommentIdx >= this.cursor) {
+                this.cursor = endCommentIdx + 2
+            } else {
+                throw new Error("syntaxError: end comment characters not found")
+            }
+            this.skipIgnoredCharacters()
+        }
+
+        else if (this.contents.slice(this.cursor, this.cursor + 2) === "/*") {
+            const endCommentIdx = this.contents.indexOf("*/", this.cursor)
+            if (endCommentIdx >= this.cursor) {
+                this.cursor = endCommentIdx + 2
+            } else {
+                throw new Error("syntaxError: end comment characters not found")
+            }
+            this.skipIgnoredCharacters()
+        }
+
+        else if (this.contents.slice(this.cursor, this.cursor + 2) === "//") {
+            const newLineIdx = this.contents.indexOf("\n", this.cursor)
+            if (newLineIdx >= this.cursor) {
+                this.cursor = newLineIdx + 1
+                this.skipIgnoredCharacters()
+            } else if (!this.contents.endsWith("\n")) {
+                this.cursor = this.contents.length
+                this.skipIgnoredCharacters()
+            }
         }
 
         return
@@ -60,43 +61,62 @@ export class JackTokenizer {
     // gets next token from input, and makes it the current token.
     // should only be called if hasMoreTokens is true
     advance() {
+        this.skipIgnoredCharacters()
         let curChar = this.contents[this.cursor]
         if (curChar === undefined) {
             throw new Error("curChar is undefined")
         }
 
-        // if its a keyword
+        // keyword
         const keywordMatch = jackGrammar.lexicalElements.keyword.find(keyword => {
             return this.contents.startsWith(keyword, this.cursor)
         })
         if (keywordMatch !== undefined) {
+            this.tokenType = "KEYWORD"
             this.curToken = keywordMatch
             this.cursor += keywordMatch.length
             return
         }
 
-        // if its a symbol
-        const symbolMatch = jackGrammar.lexicalElements.keyword.find(keyword => this.contents.startsWith(keyword, this.cursor))
+        // symbol
+        const symbolMatch = jackGrammar.lexicalElements.symbol.find(symbol => this.contents.startsWith(symbol, this.cursor))
         if (symbolMatch !== undefined) {
+            this.tokenType = "SYMBOL"
             this.curToken = curChar
             this.cursor += 1
             return
         }
 
-        // if its an integer constant from cursor position
+        // integer constant from cursor position
         const integerMatchRegex = /^[0-9]+/
         const integerMatch = this.contents.slice(this.cursor).match(integerMatchRegex)
         if (integerMatch !== null) {
+            this.tokenType = "INT_CONST"
             this.curToken = integerMatch[0]
             this.cursor += integerMatch[0].length
+            return
         }
 
-        // if its an identifier
+        // string constant
+        if (curChar === "\"") {
+            const endQuoteIndex = this.contents.indexOf("\"", this.cursor)
+            if (endQuoteIndex > this.cursor) {
+                this.tokenType = "STRING_CONST"
+                const stringConstant = this.contents.slice(this.cursor + 1, endQuoteIndex)
+                this.curToken = stringConstant
+                this.cursor = endQuoteIndex + 1
+            } else {
+                throw new Error("end-quote not found")
+            }
+            return
+        }
+
+        // identifier
         if (/^[a-zA-Z_]/.test(curChar)) {
             let word: string = curChar
             let tempCursor = this.cursor + 1
-            
-            // if its a letter or underscore, keep going until we hit a space, symbol, double-quote or new-line then stop
+
+            // if letter or underscore, keep going until we hit a space, symbol, double-quote or new-line then stop
             while (true) {
                 const nextChar = this.contents[tempCursor]
                 if (nextChar === undefined) break
@@ -109,44 +129,11 @@ export class JackTokenizer {
                 }
             }
 
+            this.tokenType = "IDENTIFIER"
             this.curToken = word
             this.cursor = tempCursor;
             return
         }
-    }
-
-    // returns type of current token; KEYWORD, SYMBOL, IDENTIFIER, INT_CONST, STRING_CONST
-    tokenType() {
-        // if (this.curToken)
-    }
-
-    /*
-    Returns the keyword which is the current token, as a constant.
-    Should only be called if tokenType is KEYWORD.
-
-    types: CLASS, METHOD, FUNCTION, CONSTRUCTOR, INT, BOOLEAN, CHAR, VOID, VAR, 
-    STATIC, FIELD, LET, DO, IF, ELSE, WHILE, RETURN, TRUE, FALSE, NULL, THIS
-    */
-    keyWord(): Keyword {
-    }
-
-    // returns character of the current token. called only if tokenType is SYMBOL
-    symbol(): Char { }
-
-    // returns identifier which is the current token. only if tokenType is IDENTIFIER
-    identifier(): string {
-        return ""
-    }
-
-    // returns integer value of the current token. called only if tokenType is INT_CONST
-    intVal(): number {
-        return 0
-    }
-
-    // Returns string value of the current token without the two enclosing double quotes.
-    // Should be called only if tokenType is STRING_CONST
-    stringVal(): string {
-        return ""
     }
 }
 
