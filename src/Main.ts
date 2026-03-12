@@ -45,19 +45,47 @@ export class Main {
         this.userArg = userArg
     }
 
-    public async run(): Promise<void> {
+    public async handleInput(): Promise<void> {
+        const stats = await this.validateInput(this.userArg)
+
+        const parsedPath = path.parse(this.userArg)
+        const absolutePath = path.resolve(process.cwd(), this.userArg)
+        if (stats.isFile() && parsedPath.ext === '.jack') {
+            this.jackFiles.push(absolutePath)
+        }
+
+        if (stats.isDirectory()) {
+            const result = await fs.readdir(this.userArg)
+            const jackFiles = result.filter(file => file.endsWith('.jack'))
+            const jackFilesAbsPath = jackFiles.map(jackFile => path.resolve(process.cwd(), this.userArg, jackFile))
+            this.jackFiles = this.jackFiles.concat(jackFilesAbsPath)
+        }
+        return
+    }
+
+    private async validateInput(input: string): Promise<Stats> {
+        return stat(input)
+    }
+
+    private async readJackFile(jackFile: string) {
+        return fs.readFile(jackFile, 'utf8')
+    }
+
+    private async writeXMLFile(outPath: string, contents: string) {
+        await fs.writeFile(outPath, contents)
+    }
+
+    public async startAnalysis(): Promise<void> {
         try {
-            await this.handleInput(this.userArg)
-            // iterate on all the jackFiles, file;
             for (const jackFile of this.jackFiles) {
                 const contents = await this.readJackFile(jackFile)
                 const tokenizer = new JackTokenizer(contents)
-
-                const outPath = jackFile.replace('.jack', '.xml')
-                
-                const engine = new CompilationEngine(tokenizer, outPath)
+                const engine = new CompilationEngine(tokenizer)
 
                 engine.compileClass()
+
+                const outPath = jackFile.replace('.jack', '.xml')
+                this.writeXMLFile(outPath, engine.outContent)
             }
         } catch (err) {
             if (err instanceof Error) {
@@ -68,29 +96,23 @@ export class Main {
         }
     }
 
-    private async handleInput(input: string): Promise<void> {
-        const stats = await this.validateInput(input)
+    public async createTokenFiles() {
+        try {
+            for (const jackFile of this.jackFiles) {
+                const contents = await this.readJackFile(jackFile)
+                const tokenizer = new JackTokenizer(contents)
 
-        const parsedPath = path.parse(input)
-        const absolutePath = path.resolve(process.cwd(), input)
-        if (stats.isFile() && parsedPath.ext === '.jack') {
-            this.jackFiles.push(absolutePath)
+                const tokenFileContents = tokenizer.createTokenFileContents()
+
+                const outPath = jackFile.replace('.jack', 'T.xml')
+                this.writeXMLFile(outPath, tokenFileContents)
+            }
+        } catch (err) {
+            if (err instanceof Error) {
+                console.error(err.message)
+            } else {
+                console.error(err)
+            }
         }
-        
-        if (stats.isDirectory()) {
-            const result = await fs.readdir(input)
-            const jackFiles = result.filter(file => file.endsWith('.jack'))
-            const jackFilesAbsPath = jackFiles.map(jackFile => path.resolve(process.cwd(), input, jackFile))
-            this.jackFiles = this.jackFiles.concat(jackFilesAbsPath)
-        }
-        return
-    }
-
-    private async validateInput(input: string): Promise<Stats> {
-        return stat(input)
-    }
-
-    async readJackFile(jackFile: string) {
-        return fs.readFile(jackFile, 'utf8')
     }
 }

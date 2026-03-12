@@ -3,50 +3,46 @@ export class JackTokenizer {
     cursor: number = 0;
     curToken: string | undefined = undefined;
     tokenType: "KEYWORD" | "SYMBOL" | "IDENTIFIER" | "INT_CONST" | "STRING_CONST" | undefined = undefined;
+    ignoredCharacters = ["\r", "\n", "\t", " ", "/*", "/**", "//"]
 
     constructor(contents: string) {
         this.contents = contents
     }
 
     skipIgnoredCharacters(): void {
-        // space or newline
-        if (this.contents[this.cursor] === " " || this.contents[this.cursor] === "\n") {
-            let ignore = true
-            while (ignore) {
-                this.cursor++
-                ignore = this.contents[this.cursor] === " " || this.contents[this.cursor] === "\n"
-            }
-            this.skipIgnoredCharacters()
-        }
-        
-        else if (this.contents.slice(this.cursor, this.cursor + 3) === "/**") {
-            const endCommentIdx = this.contents.indexOf("*/", this.cursor)
-            if (endCommentIdx >= this.cursor) {
-                this.cursor = endCommentIdx + 2
-            } else {
-                throw new Error("syntaxError: end comment characters not found")
-            }
-            this.skipIgnoredCharacters()
-        }
+        const ignoredChar = this.ignoredCharacters.find(char => this.contents.slice(this.cursor).startsWith(char))
 
-        else if (this.contents.slice(this.cursor, this.cursor + 2) === "/*") {
-            const endCommentIdx = this.contents.indexOf("*/", this.cursor)
-            if (endCommentIdx >= this.cursor) {
-                this.cursor = endCommentIdx + 2
-            } else {
-                throw new Error("syntaxError: end comment characters not found")
+        switch (ignoredChar) {
+            case "\r":
+            case "\n":
+            case "\t":
+            case " ": {
+                while (this.ignoredCharacters.includes(this.contents[this.cursor] || "")) {
+                    this.cursor++
+                }
+                this.skipIgnoredCharacters()
+                break
             }
-            this.skipIgnoredCharacters()
-        }
-
-        else if (this.contents.slice(this.cursor, this.cursor + 2) === "//") {
-            const newLineIdx = this.contents.indexOf("\n", this.cursor)
-            if (newLineIdx >= this.cursor) {
-                this.cursor = newLineIdx + 1
+            case "/*":
+            case "/**": {
+                const endCommentIdx = this.contents.indexOf("*/", this.cursor)
+                if (endCommentIdx >= this.cursor) {
+                    this.cursor = endCommentIdx + 2
+                } else {
+                    throw new Error("syntaxError: end comment characters not found")
+                }
                 this.skipIgnoredCharacters()
-            } else if (!this.contents.endsWith("\n")) {
-                this.cursor = this.contents.length
+                break
+            }
+            case "//": {
+                const newLineIdx = this.contents.indexOf("\n", this.cursor)
+                if (newLineIdx >= this.cursor) {
+                    this.cursor = newLineIdx + 1
+                } else if (!this.contents.endsWith("\n")) {
+                    this.cursor = this.contents.length
+                }
                 this.skipIgnoredCharacters()
+                break
             }
         }
 
@@ -134,6 +130,25 @@ export class JackTokenizer {
             this.cursor = tempCursor;
             return
         }
+    }
+
+    createTokenFileContents(): string {
+        let tokenFileContents: string = "";
+
+        tokenFileContents += "<tokens>"
+        while (this.hasMoreTokens()) {
+            this.advance()
+            if (this.tokenType !== undefined) {
+                const tag = this.tokenType.toLowerCase()
+                const token = this.curToken
+                tokenFileContents += `\n<${tag}>${token}<${tag}>`
+            } else {
+                throw new Error("tokenType undefined")
+            }
+        }
+        tokenFileContents += "\n<tokens>"
+
+        return tokenFileContents
     }
 }
 

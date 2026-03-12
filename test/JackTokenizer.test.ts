@@ -50,5 +50,3 @@ docs */`
     expect(tokenizer.curToken).toBe('}')
     expect(tokenizer.hasMoreTokens()).toBe(false)
 })
-
-

@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import { type JackTokenizer } from "./JackTokenizer.js";
 
 /*
@@ -12,15 +13,19 @@ The following rules in the Jack grammer have no corresponding compilexxx methods
 
 export class CompilationEngine {
     tokenizer: JackTokenizer;
-    outPath: string;
+    outContent: string;
 
     // creates new compilation engine with given input and output
     // The next routine called (by JackAnalyzer module) must be compileClass
     // Args: input file/stream, output file/stream
     // #TODO: refactor this constructor
-    constructor(tokenizer: JackTokenizer, outPath: string) {
+    constructor(tokenizer: JackTokenizer) {
         this.tokenizer = tokenizer
-        this.outPath = outPath
+        this.outContent = ""
+    }
+
+    addTag(token: string) {
+        console.log(token)
     }
 
     // class: "'class' className '{' classVarDec* subroutineDec* '}'",
@@ -28,7 +33,8 @@ export class CompilationEngine {
         if (this.tokenizer.hasMoreTokens()) {
             this.tokenizer.advance()
 
-            if (this.tokenizer.tokenType === 'KEYWORD') {
+            const tokenType = this.tokenizer.tokenType
+            if (tokenType === 'KEYWORD') {
                 const keyword = this.tokenizer.curToken
                 if (keyword === 'class') {
                     this.addTag(keyword)
@@ -36,17 +42,21 @@ export class CompilationEngine {
                     throw new Error(`keyword should be 'class', recieved ${keyword}`)
                 }
             } else {
-                throw new Error("token should be type: 'KEYWORD'")
+                throw new Error(`token should be type: 'KEYWORD', recieved ${tokenType}`)
             }
         }
 
         if (this.tokenizer.hasMoreTokens()) {
             this.tokenizer.advance()
-            const tokenType = this.tokenizer.tokenType
 
+            const tokenType = this.tokenizer.tokenType
             if (tokenType === 'IDENTIFIER') {
                 const identifier = this.tokenizer.curToken
-                this.addTag(identifier)
+                if (identifier) {
+                    this.addTag(identifier)
+                } else {
+                    throw new Error(`identifier undefined`)
+                }
             } else {
                 throw new Error(`token should be type: 'IDENTIFIER', recieved ${tokenType}`)
             }
@@ -67,18 +77,10 @@ export class CompilationEngine {
             }
         }
 
-        if (this.tokenizer.hasMoreTokens()) {
-            this.tokenizer.advance()
-            const tokenType = this.tokenizer.tokenType
-
-            if (tokenType === 'IDENTIFIER') {
-                const identifier = this.tokenizer.curToken
-                this.addTag(identifier)
-            } else {
-                throw new Error(`token should be type: 'IDENTIFIER', recieved ${tokenType}`)
-            }
-        }
-
+        // this.compileClassVarDec()
+        // this.compileSubroutineDec ?
+        // compile
+        return
     }
     compileClassVarDec() { }
     compileSubroutine() { }
