@@ -28,24 +28,15 @@ test('it successfully handles a valid directory', async () => {
     expect(main.jackFiles).toEqual(expectedJackFiles)
 })
 
-test('it successfully creates tokenFile test-file-MainT.xml', async () => {
-    const inputFile = 'test/project10-jack-test-files/test-file-Main.jack'
-    const inputFileStat = await fs.stat(inputFile)
-    expect(inputFileStat).toBeDefined()
-
-    const main = new Main(inputFile)
+test('it successfully creates tokenFile ArrayTest/MainT.xml', async () => {
+    const input = 'test/project10-jack-test-files/ArrayTest'
+    const main = new Main(input)
     await main.handleInput()
     await main.createTokenFiles()
-
-    console.log(process.cwd())
-
-    const cwdStat = await fs.stat(process.cwd()) 
-    expect(cwdStat).toBeDefined()
-
-    const tokenFilePath = inputFile.replace(".jack", "T.xml")
-    const tokenFileStat = await fs.stat(tokenFilePath)
-    expect(tokenFileStat).toBeDefined()
-
+    
+    const tokenFilePath = "test/project10-jack-test-files/ArrayTest/MainT.xml"
     const tokenFileContents = await fs.readFile(tokenFilePath, 'utf8')
-    expect(tokenFileContents).toContain("<tokens>")
+
+    const correctTokenFileContents = await fs.readFile("test/project10-jack-test-files-copy/ArrayTest/MainT.xml", 'utf8')
+    expect(tokenFileContents).toBe(correctTokenFileContents)
 })

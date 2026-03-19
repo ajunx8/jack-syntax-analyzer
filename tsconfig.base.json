@@ -15,11 +15,6 @@
       "es2022"
     ]
   },
-  // "include": [
-  //   "src/**/*",
-  //   "test/**/*",
-  //   "dev-notes/**/*"
-  // ],
   "exclude": [
     "node_modules", // for defensive programming
   ]
