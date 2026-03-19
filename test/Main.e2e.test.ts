@@ -1,6 +1,7 @@
 import { test, expect } from "vitest";
 import { Main } from "../src/Main.js";
 import * as fs from "node:fs/promises"
+import path from "node:path";
 
 // End-to-end testing of the business logic
 test('it successfully handles a valid file', async () => {
@@ -28,15 +29,47 @@ test('it successfully handles a valid directory', async () => {
     expect(main.jackFiles).toEqual(expectedJackFiles)
 })
 
-test('it successfully creates tokenFile ArrayTest/MainT.xml', async () => {
+test('it successfully creates valid tokenFiles for ArrayTest', async () => {
     const input = 'test/project10-jack-test-files/ArrayTest'
     const main = new Main(input)
     await main.handleInput()
     await main.createTokenFiles()
     
-    const tokenFilePath = "test/project10-jack-test-files/ArrayTest/MainT.xml"
-    const tokenFileContents = await fs.readFile(tokenFilePath, 'utf8')
+    for (const tokenFile of main.tokenFiles) {
+        const tokenFileContents = await fs.readFile(tokenFile, 'utf8')
+        const correctTokenFile = `test/project10-jack-test-files-copy/ArrayTest/${path.basename(tokenFile)}`
+        const correctTokenFileContents = await fs.readFile(correctTokenFile, 'utf8')
 
-    const correctTokenFileContents = await fs.readFile("test/project10-jack-test-files-copy/ArrayTest/MainT.xml", 'utf8')
-    expect(tokenFileContents).toBe(correctTokenFileContents)
+        expect(tokenFileContents).toBe(correctTokenFileContents)
+    }
+})
+
+test('it successfully creates valid tokenFiles for ExpressionLessSquare', async () => {
+    const input = 'test/project10-jack-test-files/ExpressionLessSquare'
+    const main = new Main(input)
+    await main.handleInput()
+    await main.createTokenFiles()
+    
+    for (const tokenFile of main.tokenFiles) {
+        const tokenFileContents = await fs.readFile(tokenFile, 'utf8')
+        const correctTokenFile = `test/project10-jack-test-files-copy/ExpressionLessSquare/${path.basename(tokenFile)}`
+        const correctTokenFileContents = await fs.readFile(correctTokenFile, 'utf8')
+
+        expect(tokenFileContents).toBe(correctTokenFileContents)
+    }
+})
+
+test('it successfully creates valid tokenFiles for Square', async () => {
+    const input = 'test/project10-jack-test-files/Square'
+    const main = new Main(input)
+    await main.handleInput()
+    await main.createTokenFiles()
+    
+    for (const tokenFile of main.tokenFiles) {
+        const tokenFileContents = await fs.readFile(tokenFile, 'utf8')
+        const correctTokenFile = `test/project10-jack-test-files-copy/Square/${path.basename(tokenFile)}`
+        const correctTokenFileContents = await fs.readFile(correctTokenFile, 'utf8')
+
+        expect(tokenFileContents).toBe(correctTokenFileContents)
+    }
 })

@@ -40,6 +40,8 @@ import type { Stats } from 'node:fs';
 export class Main {
     userArg: string;
     jackFiles: string[] = [];
+    tokenFiles: string[] = [];
+    xmlFiles: string[] = [];
 
     constructor(userArg: string) {
         this.userArg = userArg
@@ -105,6 +107,7 @@ export class Main {
                 const tokenFileContents = tokenizer.createTokenFileContents()
 
                 const outPath = jackFile.replace('.jack', 'T.xml')
+                this.tokenFiles.push(outPath)
                 await this.writeXMLFile(outPath, tokenFileContents)
             }
         } catch (err) {
