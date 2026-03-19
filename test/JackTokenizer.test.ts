@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { expect, it } from "vitest";
 import { JackTokenizer } from "../src/JackTokenizer.js";
 
 // start of the simplest happy path. Each subsequent test should be a little harder

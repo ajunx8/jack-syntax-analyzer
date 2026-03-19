@@ -58,7 +58,7 @@ export class JackTokenizer {
     // should only be called if hasMoreTokens is true
     advance() {
         this.skipIgnoredCharacters()
-        let curChar = this.contents[this.cursor]
+        const curChar = this.contents[this.cursor]
         if (curChar === undefined) {
             throw new Error("curChar is undefined")
         }

@@ -1,4 +1,3 @@
-import { writeFile } from "node:fs/promises";
 import { type JackTokenizer } from "./JackTokenizer.js";
 
 /*

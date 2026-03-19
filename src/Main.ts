@@ -85,7 +85,7 @@ export class Main {
                 engine.compileClass()
 
                 const outPath = jackFile.replace('.jack', '.xml')
-                this.writeXMLFile(outPath, engine.outContent)
+                await this.writeXMLFile(outPath, engine.outContent)
             }
         } catch (err) {
             if (err instanceof Error) {
@@ -105,7 +105,7 @@ export class Main {
                 const tokenFileContents = tokenizer.createTokenFileContents()
 
                 const outPath = jackFile.replace('.jack', 'T.xml')
-                this.writeXMLFile(outPath, tokenFileContents)
+                await this.writeXMLFile(outPath, tokenFileContents)
             }
         } catch (err) {
             if (err instanceof Error) {
