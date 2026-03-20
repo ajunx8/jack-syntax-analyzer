@@ -29,47 +29,61 @@ test('it successfully handles a valid directory', async () => {
     expect(main.jackFiles).toEqual(expectedJackFiles)
 })
 
-test('it successfully creates valid tokenFiles for ArrayTest', async () => {
-    const input = 'test/project10-jack-test-files/ArrayTest'
-    const main = new Main(input)
+async function tokenizeDirectory(dir: string) {
+    const main = new Main(dir)
     await main.handleInput()
     await main.createTokenFiles()
     
     for (const tokenFile of main.tokenFiles) {
         const tokenFileContents = await fs.readFile(tokenFile, 'utf8')
-        const correctTokenFile = `test/project10-jack-test-files-copy/ArrayTest/${path.basename(tokenFile)}`
+        const correctTokenFile = `test/project10-jack-test-files-copy/${path.basename(dir)}/${path.basename(tokenFile)}`
         const correctTokenFileContents = await fs.readFile(correctTokenFile, 'utf8')
-
+        
         expect(tokenFileContents).toBe(correctTokenFileContents)
     }
+}
+
+test('it successfully creates valid tokenFiles for ArrayTest', async () => {
+    const input = 'test/project10-jack-test-files/ArrayTest'
+    await tokenizeDirectory(input)
 })
 
 test('it successfully creates valid tokenFiles for ExpressionLessSquare', async () => {
     const input = 'test/project10-jack-test-files/ExpressionLessSquare'
-    const main = new Main(input)
-    await main.handleInput()
-    await main.createTokenFiles()
-    
-    for (const tokenFile of main.tokenFiles) {
-        const tokenFileContents = await fs.readFile(tokenFile, 'utf8')
-        const correctTokenFile = `test/project10-jack-test-files-copy/ExpressionLessSquare/${path.basename(tokenFile)}`
-        const correctTokenFileContents = await fs.readFile(correctTokenFile, 'utf8')
-
-        expect(tokenFileContents).toBe(correctTokenFileContents)
-    }
+    await tokenizeDirectory(input)
 })
 
 test('it successfully creates valid tokenFiles for Square', async () => {
     const input = 'test/project10-jack-test-files/Square'
-    const main = new Main(input)
-    await main.handleInput()
-    await main.createTokenFiles()
-    
-    for (const tokenFile of main.tokenFiles) {
-        const tokenFileContents = await fs.readFile(tokenFile, 'utf8')
-        const correctTokenFile = `test/project10-jack-test-files-copy/Square/${path.basename(tokenFile)}`
-        const correctTokenFileContents = await fs.readFile(correctTokenFile, 'utf8')
+    await tokenizeDirectory(input)
+})
 
-        expect(tokenFileContents).toBe(correctTokenFileContents)
+async function compileDirectory(dir: string) {
+    const main = new Main(dir)
+    await main.handleInput()
+    await main.startAnalysis()
+    
+    for (const xmlFile of main.xmlFiles) {
+        const xmlFileContents = await fs.readFile(xmlFile, 'utf8')
+        const correctXmlFile = `test/project10-jack-test-files-copy/${path.basename(dir)}/${path.basename(xmlFile)}`
+        const correctXmlFileContents = await fs.readFile(correctXmlFile, 'utf8')
+        
+        expect(xmlFileContents).toBe(correctXmlFileContents)
     }
+}
+
+
+test('compiles ExpressionLessSquare', async () => {
+    const input = 'test/project10-jack-test-files/ExpressionLessSquare'
+    expect(await compileDirectory(input)).not.toThrow(Error)
+})
+
+test('compiles Square', async () => {
+    const input = 'test/project10-jack-test-files/Square'
+    expect(await compileDirectory(input)).not.toThrow(Error)
+})
+
+test('compiles ArrayTest', async () => {
+    const input = 'test/project10-jack-test-files/ArrayTest'
+    expect(await compileDirectory(input)).not.toThrow(Error)
 })

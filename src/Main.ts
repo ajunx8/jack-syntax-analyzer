@@ -87,6 +87,7 @@ export class Main {
                 engine.compileClass()
 
                 const outPath = jackFile.replace('.jack', '.xml')
+                this.xmlFiles.push(outPath)
                 await this.writeXMLFile(outPath, engine.outContent)
             }
         } catch (err) {
