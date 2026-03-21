@@ -51,7 +51,6 @@ export class CompilationEngine {
             this.tokenizer.advance()
         }
     }
-
     addNonTerminalStart(nonTerminal: string) {
         this.outContent += `\r\n${"  ".repeat(this.indent)}<${nonTerminal}>`
         this.indent++
@@ -60,32 +59,11 @@ export class CompilationEngine {
         this.indent--
         this.outContent += `\r\n${"  ".repeat(this.indent)}</${nonTerminal}>`
     }
-
-    /* meta-language translation:
-        'xxx' : (bold) represent language tokens that appear verbatim (terminals)
-        xxx   : (italic) represents names of terminal and nonterminal elements
-        ()    : used for grouping
-        x | y : Either x or y
-        x y   : x is followed by y
-        x?    : x appears 0 or 1 times
-        x*    : x appears 0 or more times
-
-        The grammar consists of rules
-        Each rule consists of a left side and a right side
-        Left side specifies the rules name
-        Right side describes the rule, a pattern
-        The pattern is a left-to-right sequence consisting of terminals, nonterminals and qualifiers
-        terminals: tokens,
-        nonterminals: names of other rules
-        qualifiers: ["|", "*", "?", "(", ")"]
-
-        how can I encode LL(1)
-    */
-
     // class: "'class' className '{' classVarDec* subroutineDec* '}'",
     compileClass() {
         if (this.tokenizer.hasMoreTokens()) this.tokenizer.advance();
-        this.addNonTerminalStart("class")
+        this.outContent += "<class>"
+        this.indent++
 
         this.processToken("keyword", "class")
         this.processToken("identifier", this.tokenizer.curToken)
@@ -129,7 +107,6 @@ export class CompilationEngine {
             default: throw new SyntaxError("missing type")
         }
     }
-
     // (',' varName)*
     compileOptionalVarNames() {
         const curToken = this.tokenizer.curToken
@@ -167,23 +144,94 @@ export class CompilationEngine {
     }
     // parameterList: "((type varName) (',' type varName)*)?"
     compileParameterList() {
+        const curToken = this.tokenizer.curToken
         this.addNonTerminalStart("parameterList")
-        switch (this.tokenizer.curToken) {
-            
+        if (this.tokenizer.tokenType === "identifier" || curToken === "int" || curToken === "char" || curToken === "boolean") {
+            this.processType()
+            this.processToken("identifier", this.tokenizer.curToken)
+            this.compileOptionalVarNames()
         }
         this.addNonTerminalEnd("parameterList")
     }
+    // subroutineBody: "'{' varDec* statements '}'"
+    compileSubroutineBody() {
+        this.addNonTerminalStart("subroutineBody")
+        this.processToken("symbol", "{")
+        while (this.tokenizer.curToken === "var") {
+            this.compileVarDec()
+        }
+        this.compileStatements()
+        this.processToken("symbol", "}")
+        this.addNonTerminalEnd("subroutineBody")
+    }
+    // varDec: "'var' type varName (',' varName)* ';'"
+    compileVarDec() {
+        this.addNonTerminalStart("varDec")
 
-    compileSubroutineBody() { }
-    compileVarDec() { }
-    compileStatements() { }
+        this.processToken("keyword", "var")
+        this.processType()
+        this.processToken("identifier", this.tokenizer.curToken)
+        this.compileOptionalVarNames()
+        this.processToken("symbol", ";")
 
-    compileLet() { }
+        this.addNonTerminalEnd("varDec")
+    }
+    // statements: {
+    //     statements: "statement*",
+    //     statement: "letStatement | ifStatement | whileStatement | doStatement | returnStatement",
+    //     letStatement: "'let' varName ('[' expression ']')? '=' expression ';'",
+    //     ifStatement: "'if' '(' expression ')' '{' statements '}' ('else' '{' statements '}')?",
+    //     whileStatement: "'while' '(' expression ')' '{' statements '}'",
+    // },
+    compileStatements() {
+        this.addNonTerminalStart("statements")
+
+        while (["let", "if", "while", "do", "return"].includes(this.tokenizer.curToken || "")) {
+            switch (this.tokenizer.curToken) {
+                case "let": this.compileLet(); break
+                case "if": this.compileIf(); break
+                case "while": this.compileWhile(); break
+                case "do": this.compileDo(); break
+                case "return": this.compileReturn(); break
+            }
+        }
+
+        this.addNonTerminalEnd("statements")
+    }
+    compileLet() {
+        this.addNonTerminalStart("letStatement")
+
+        this.processToken("keyword", "let")
+        this.processToken("identifier", this.tokenizer.curToken)
+        if (this.tokenizer.curToken === "[") {
+            this.processToken("symbol", "[")
+            this.compileExpression()
+            this.processToken("symbol", "]")
+        }
+        this.processToken("symbol", "=")
+        this.compileExpression()
+        this.processToken("symbol", ";")
+
+        this.addNonTerminalEnd("letStatement")
+    }
     compileIf() { }
     compileWhile() { }
     compileDo() { }
     compileReturn() { }
-    compileExpression() { }
+    // expression: "term (op term)*"
+    compileExpression() {
+        this.addNonTerminalStart("expression")
+
+        this.compileTerm()
+        let op = ["+", "-", "*", "/", "&", "|", "<", ">", "="].find(op => op === this.tokenizer.curToken)
+        while (op) {
+            this.processToken("symbol", op)
+            this.compileTerm()
+            op = ["+", "-", "*", "/", "&", "|", "<", ">", "="].find(op => op === this.tokenizer.curToken)
+        }
+        
+        this.addNonTerminalEnd("expression")
+    }
 
     /*
     Compiles a term. If the current token is an identifier, the routine must distinguish between a variable,
@@ -191,10 +239,35 @@ export class CompilationEngine {
     "[", "(", or ".", suffices to distinguish between the possibilities. Any other token is not part of this term and
     should not be advanced over.
     */
-    compileTerm() { }
+    // "integerConstant | stringConstant | keywordConstant | varName | varName'['expression']' | '('expression')' | (unaryOP term) | subroutineCall"
+    compileTerm() {
+        this.addNonTerminalStart("term")
+        this.addNonTerminalEnd("term")
+    }
 
     /*
     Compiles a (possibly empty) comma-separated list of expressions.
     */
     compileExpressionList() { }
 }
+
+/* meta-language translation:
+    'xxx' : (bold) represent language tokens that appear verbatim (terminals)
+    xxx   : (italic) represents names of terminal and nonterminal elements
+    ()    : used for grouping
+    x | y : Either x or y
+    x y   : x is followed by y
+    x?    : x appears 0 or 1 times
+    x*    : x appears 0 or more times
+
+    The grammar consists of rules
+    Each rule consists of a left side and a right side
+    Left side specifies the rules name
+    Right side describes the rule, a pattern
+    The pattern is a left-to-right sequence consisting of terminals, nonterminals and qualifiers
+    terminals: tokens,
+    nonterminals: names of other rules
+    qualifiers: ["|", "*", "?", "(", ")"]
+
+    how can I encode LL(1)
+ */
