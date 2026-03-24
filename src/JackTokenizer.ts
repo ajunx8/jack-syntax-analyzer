@@ -184,6 +184,8 @@ const jackGrammar = {
         letStatement: "'let' varName ('[' expression ']')? '=' expression ';'",
         ifStatement: "'if' '(' expression ')' '{' statements '}' ('else' '{' statements '}')?",
         whileStatement: "'while' '(' expression ')' '{' statements '}'",
+        doStatement: "'do' subroutineCall ';'",
+        returnStatement: "'return' expression? ';'"
     },
     expressions: {
         expression: "term (op term)*",

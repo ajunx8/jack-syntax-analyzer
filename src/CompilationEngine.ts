@@ -1,15 +1,5 @@
 import { type JackTokenizer } from "./JackTokenizer.js";
 
-/*
-The following rules in the Jack grammer have no corresponding compilexxx methods:
-- type
-- className
-- subroutineName
-- variableName
-- statement
-- subroutineCall
-*/
-
 export class CompilationEngine {
     tokenizer: JackTokenizer;
     outContent: string;
@@ -176,13 +166,8 @@ export class CompilationEngine {
 
         this.addNonTerminalEnd("varDec")
     }
-    // statements: {
-    //     statements: "statement*",
-    //     statement: "letStatement | ifStatement | whileStatement | doStatement | returnStatement",
-    //     letStatement: "'let' varName ('[' expression ']')? '=' expression ';'",
-    //     ifStatement: "'if' '(' expression ')' '{' statements '}' ('else' '{' statements '}')?",
-    //     whileStatement: "'while' '(' expression ')' '{' statements '}'",
-    // },
+    // statements: "statement*"
+    // statement: "letStatement | ifStatement | whileStatement | doStatement | returnStatement"
     compileStatements() {
         this.addNonTerminalStart("statements")
 
@@ -198,6 +183,7 @@ export class CompilationEngine {
 
         this.addNonTerminalEnd("statements")
     }
+    // letStatement: "'let' varName ('[' expression ']')? '=' expression ';'",
     compileLet() {
         this.addNonTerminalStart("letStatement")
 
@@ -214,10 +200,60 @@ export class CompilationEngine {
 
         this.addNonTerminalEnd("letStatement")
     }
-    compileIf() { }
-    compileWhile() { }
-    compileDo() { }
-    compileReturn() { }
+    // ifStatement: "'if' '(' expression ')' '{' statements '}' ('else' '{' statements '}')?",
+    compileIf() {
+        this.addNonTerminalStart("if")
+
+        this.processToken("keyword", "if")
+        this.processToken("symbol", "(")
+        this.compileExpression()
+        this.processToken("symbol", ")")
+        this.processToken("symbol", "{")
+        this.compileStatements()
+        this.processToken("symbol", "}")
+        if (this.tokenizer.curToken === "else") {
+            this.processToken("keyword", "else")
+            this.processToken("symbol", "{")
+            this.compileStatements()
+            this.processToken("symbol", "}")
+        }
+
+        this.addNonTerminalEnd("if")
+    }
+    // whileStatement: "'while' '(' expression ')' '{' statements '}'",
+    compileWhile() {
+        this.addNonTerminalStart("while")
+        
+        this.processToken("keyword", "while")
+        this.processToken("symbol", "(")
+        this.compileExpression()
+        this.processToken("symbol", ")")
+        this.processToken("symbol", "{")
+        this.compileStatements()
+        this.processToken("symbol", "}")
+        
+        this.addNonTerminalEnd("while")
+    }
+    // doStatement: "'do' subroutineCall ';'",
+    compileDo() {
+        this.addNonTerminalStart("do")
+
+        this.processToken("keyword", "do")
+        this.compileSubroutine()
+        this.processToken("symbol", ";")
+
+        this.addNonTerminalEnd("do")
+    }
+    // returnStatement: "'return' expression? ';'"
+    compileReturn() {
+        this.addNonTerminalStart("return")
+
+        this.processToken("keyword", "return")
+        this.compileExpression
+        
+        this.addNonTerminalEnd("return")
+    }
+
     // expression: "term (op term)*"
     compileExpression() {
         this.addNonTerminalStart("expression")
@@ -229,7 +265,7 @@ export class CompilationEngine {
             this.compileTerm()
             op = ["+", "-", "*", "/", "&", "|", "<", ">", "="].find(op => op === this.tokenizer.curToken)
         }
-        
+
         this.addNonTerminalEnd("expression")
     }
 
@@ -239,9 +275,10 @@ export class CompilationEngine {
     "[", "(", or ".", suffices to distinguish between the possibilities. Any other token is not part of this term and
     should not be advanced over.
     */
-    // "integerConstant | stringConstant | keywordConstant | varName | varName'['expression']' | '('expression')' | (unaryOP term) | subroutineCall"
+    // term: "integerConstant | stringConstant | keywordConstant | varName | varName'['expression']' | '('expression')' | (unaryOP term) | subroutineCall"
     compileTerm() {
         this.addNonTerminalStart("term")
+        this.processToken("identifier", this.tokenizer.curToken)
         this.addNonTerminalEnd("term")
     }
 
