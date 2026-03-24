@@ -75,15 +75,15 @@ async function compileDirectory(dir: string) {
 
 test('compiles ExpressionLessSquare', async () => {
     const input = 'test/project10-jack-test-files/ExpressionLessSquare'
-    expect(await compileDirectory(input)).not.toThrow(Error)
+    await compileDirectory(input)
 })
 
 test('compiles Square', async () => {
     const input = 'test/project10-jack-test-files/Square'
-    expect(await compileDirectory(input)).not.toThrow(Error)
+    await compileDirectory(input)
 })
 
 test('compiles ArrayTest', async () => {
     const input = 'test/project10-jack-test-files/ArrayTest'
-    expect(await compileDirectory(input)).not.toThrow(Error)
+    await compileDirectory(input)
 })

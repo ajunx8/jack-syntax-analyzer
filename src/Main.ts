@@ -78,45 +78,29 @@ export class Main {
     }
 
     public async startAnalysis(): Promise<void> {
-        try {
-            for (const jackFile of this.jackFiles) {
-                const contents = await this.readJackFile(jackFile)
-                const tokenizer = new JackTokenizer(contents)
-                const engine = new CompilationEngine(tokenizer)
+        for (const jackFile of this.jackFiles) {
+            const contents = await this.readJackFile(jackFile)
+            const tokenizer = new JackTokenizer(contents)
+            const engine = new CompilationEngine(tokenizer)
 
-                engine.compileClass()
+            engine.compileClass()
 
-                const outPath = jackFile.replace('.jack', '.xml')
-                this.xmlFiles.push(outPath)
-                await this.writeXMLFile(outPath, engine.outContent)
-            }
-        } catch (err) {
-            if (err instanceof Error) {
-                console.error(err.message)
-            } else {
-                console.error(err)
-            }
+            const outPath = jackFile.replace('.jack', '.xml')
+            this.xmlFiles.push(outPath)
+            await this.writeXMLFile(outPath, engine.outContent)
         }
     }
 
     public async createTokenFiles() {
-        try {
-            for (const jackFile of this.jackFiles) {
-                const contents = await this.readJackFile(jackFile)
-                const tokenizer = new JackTokenizer(contents)
+        for (const jackFile of this.jackFiles) {
+            const contents = await this.readJackFile(jackFile)
+            const tokenizer = new JackTokenizer(contents)
 
-                const tokenFileContents = tokenizer.createTokenFileContents()
+            const tokenFileContents = tokenizer.createTokenFileContents()
 
-                const outPath = jackFile.replace('.jack', 'T.xml')
-                this.tokenFiles.push(outPath)
-                await this.writeXMLFile(outPath, tokenFileContents)
-            }
-        } catch (err) {
-            if (err instanceof Error) {
-                console.error(err.message)
-            } else {
-                console.error(err)
-            }
+            const outPath = jackFile.replace('.jack', 'T.xml')
+            this.tokenFiles.push(outPath)
+            await this.writeXMLFile(outPath, tokenFileContents)
         }
     }
 }
