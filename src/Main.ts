@@ -79,14 +79,15 @@ export class Main {
 
     public async startAnalysis(): Promise<void> {
         for (const jackFile of this.jackFiles) {
+            const outPath = jackFile.replace('.jack', '.xml')
+            this.xmlFiles.push(outPath)
+            
             const contents = await this.readJackFile(jackFile)
             const tokenizer = new JackTokenizer(contents)
             const engine = new CompilationEngine(tokenizer)
 
             engine.compileClass()
 
-            const outPath = jackFile.replace('.jack', '.xml')
-            this.xmlFiles.push(outPath)
             await this.writeXMLFile(outPath, engine.outContent)
         }
     }

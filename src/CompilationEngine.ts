@@ -63,30 +63,32 @@ export class CompilationEngine {
         this.processToken("keyword", "class")
         this.processToken("identifier", this.currentToken())
         this.processToken("symbol", "{")
-        this.compileClassVarDec()
-        this.compileSubroutine()
+        while (this.currentToken() === 'static' || this.currentToken() === 'field') {
+            this.compileClassVarDec()
+        }
+        while (["constructor", "function", "method"].includes(this.currentToken() || "")) {
+            this.compileSubroutine()
+        }
         this.processToken("symbol", "}")
 
-        this.addNonTerminalEnd("class")
+        this.outContent += `\r\n</class>\r\n`
+        fs.writeFileSync("temp.xml", this.outContent)
         return
     }
     // classVarDec: "('static' | 'field') type varName (',' varName)* ';'"
     compileClassVarDec() {
-        while (this.currentToken() === 'static' || this.currentToken() === 'field') {
-            this.addNonTerminalStart("classVarDec")
+        this.addNonTerminalStart("classVarDec")
 
-            this.processToken("keyword", this.currentToken())
-            this.processType()
+        this.processToken("keyword", this.currentToken())
+        this.processType()
+        this.processToken("identifier", this.currentToken())
+        while (this.currentToken() === ',') {
+            this.processToken("symbol", ",")
             this.processToken("identifier", this.currentToken())
-            while (this.currentToken() === ',') {
-                this.processToken("symbol", ",")
-                this.processToken("identifier", this.currentToken())
-            }
-            this.processToken("symbol", ";")
-
-            this.addNonTerminalEnd("classVarDec")
-            this.compileClassVarDec()
         }
+        this.processToken("symbol", ";")
+
+        this.addNonTerminalEnd("classVarDec")
     }
     // type: "'int' | 'char' | 'boolean' | className"
     processType() {
@@ -106,12 +108,7 @@ export class CompilationEngine {
     compileSubroutine() {
         this.addNonTerminalStart("subroutineDec")
 
-        switch (this.currentToken()) {
-            case "constructor": this.processToken("keyword", "constructor"); break
-            case "function": this.processToken("keyword", "function"); break
-            case "method": this.processToken("keyword", "method"); break
-            default: return
-        }
+        this.processToken("keyword", this.currentToken())
         switch (this.tokenizer.tokenType) {
             case "keyword": this.processToken("keyword", 'void'); break
             case "identifier": this.processType(); break
@@ -124,7 +121,6 @@ export class CompilationEngine {
         this.compileSubroutineBody()
 
         this.addNonTerminalEnd("subroutineDec")
-        this.compileSubroutine()
     }
     // parameterList: "((type varName) (',' type varName)*)?"
     compileParameterList() {
@@ -136,6 +132,7 @@ export class CompilationEngine {
             this.processToken("identifier", this.currentToken())
             while (this.currentToken() === ',') {
                 this.processToken("symbol", ",")
+                this.processType()
                 this.processToken("identifier", this.currentToken())
             }
         }
@@ -297,10 +294,20 @@ export class CompilationEngine {
     "[", "(", or ".", suffices to distinguish between the possibilities. Any other token is not part of this term and
     should not be advanced over.
     */
-    // term: "integerConstant | stringConstant | keywordConstant | varName | varName'['expression']' | '('expression')' | (unaryOP term) | subroutineCall"
+    // term: "integerConstant | stringConstant | keywordConstant | varName | varName'['expression']'|'('expression')'|(unaryOP term)|subroutineCall"
     compileTerm() {
         this.addNonTerminalStart("term")
-        this.processToken("identifier", this.currentToken())
+
+        switch (this.tokenizer.tokenType) {
+            case "integerConstant":
+            case "stringConstant":
+            case "keyword":
+            case "identifier":
+                this.processToken(this.tokenizer.tokenType, this.currentToken())
+                break
+            default: throw new SyntaxError(`SyntaxError: expected token type: intConst, string, keyword, identifier, recieved: ${this.tokenizer.tokenType}`)
+        }
+
         this.addNonTerminalEnd("term")
     }
 
@@ -311,7 +318,13 @@ export class CompilationEngine {
     compileExpressionList() {
         this.addNonTerminalStart("expressionList")
 
-        this
+        while (["identifier", "keyword"].includes(this.tokenizer.tokenType || "")) {
+            this.compileExpression()
+            while (this.currentToken() === ",") {
+                this.processToken("symbol", ",")
+                this.compileExpression()
+            }
+        }
 
         this.addNonTerminalEnd("expressionList")
     }
