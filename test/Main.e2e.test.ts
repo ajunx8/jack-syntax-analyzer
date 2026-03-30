@@ -36,7 +36,7 @@ async function tokenizeDirectory(dir: string) {
     
     for (const tokenFile of main.tokenFiles) {
         const tokenFileContents = await fs.readFile(tokenFile, 'utf8')
-        const correctTokenFile = `test/project10-jack-test-files-copy/${path.basename(dir)}/${path.basename(tokenFile)}`
+        const correctTokenFile = `test/project10-jack-test-files-fixture/${path.basename(dir)}/${path.basename(tokenFile)}`
         const correctTokenFileContents = await fs.readFile(correctTokenFile, 'utf8')
         
         expect(tokenFileContents).toBe(correctTokenFileContents)
@@ -65,7 +65,7 @@ async function compileDirectory(dir: string) {
     
     for (const xmlFile of main.xmlFiles) {
         const xmlFileContents = await fs.readFile(xmlFile, 'utf8')
-        const correctXmlFile = `test/project10-jack-test-files-copy/${path.basename(dir)}/${path.basename(xmlFile)}`
+        const correctXmlFile = `test/project10-jack-test-files-fixture/${path.basename(dir)}/${path.basename(xmlFile)}`
         const correctXmlFileContents = await fs.readFile(correctXmlFile, 'utf8')
         
         expect(xmlFileContents).toBe(correctXmlFileContents)
