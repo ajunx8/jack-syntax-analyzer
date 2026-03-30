@@ -250,15 +250,29 @@ export class CompilationEngine {
         this.addNonTerminalStart("returnStatement")
 
         this.processToken("keyword", "return")
-        if (this.tokenizer.tokenType === "identifier") {
-            this.compileExpression()
+        switch (this.tokenizer.tokenType) {
+            case "integerConstant":
+            case "stringConstant": this.compileExpression(); break
+            case "keyword":
+                switch (this.currentToken()) {
+                    case "true":
+                    case "false":
+                    case "null":
+                    case "this": this.compileExpression(); break
+                }; break
+            case "identifier": this.compileExpression(); break
+            case "symbol":
+                switch (this.currentToken()) {
+                    case "-":
+                    case "~":
+                    case "(": this.compileExpression(); break
+                }
         }
         this.processToken("symbol", ";")
 
         this.addNonTerminalEnd("returnStatement")
     }
     // subroutineCall: "subroutineName'('expressionList')'|(className | varName)'.'subroutineName'('expressionList')'"
-    // game("start", 1+1), game.run(),   
     compileSubroutineCall() {
         this.processToken("identifier", this.currentToken())
         if (this.currentToken() === ".") {
@@ -269,84 +283,90 @@ export class CompilationEngine {
         this.compileExpressionList()
         this.processToken("symbol", ")")
     }
-
     // expression: "term (op term)*"
     compileExpression() {
         this.addNonTerminalStart("expression")
 
-
         this.compileTerm()
-        // this.processToken("identifier", this.currentToken())
-        // this.compileTerm()
-        // let op = ["+", "-", "*", "/", "&", "|", "<", ">", "="].find(op => op === this.currentToken())
-        // while (op) {
-        //     this.processToken("symbol", op)
-        //     this.compileTerm()
-        //     op = ["+", "-", "*", "/", "&", "|", "<", ">", "="].find(op => op === this.currentToken())
-        // }
+        let op = ["+", "-", "*", "/", "&", "|", "<", ">", "="].find(op => op === this.currentToken())
+        while (op) {
+            this.processToken("symbol", op)
+            this.compileTerm()
+            op = ["+", "-", "*", "/", "&", "|", "<", ">", "="].find(op => op === this.currentToken())
+        }
 
         this.addNonTerminalEnd("expression")
     }
-
-    /*
-    Compiles a term. If the current token is an identifier, the routine must distinguish between a variable,
-    an array entry, or a subroutine call. A single look-ahead token, which may be one of
-    "[", "(", or ".", suffices to distinguish between the possibilities. Any other token is not part of this term and
-    should not be advanced over.
-    */
-    // term: "integerConstant | stringConstant | keywordConstant | varName | varName'['expression']'|'('expression')'|(unaryOP term)|subroutineCall"
+    // term: "integerConstant | stringConstant | keywordConstant | varName | "varName'['expression']'" | '('expression')' | (unaryOP term) | subroutineCall"
     compileTerm() {
         this.addNonTerminalStart("term")
 
         switch (this.tokenizer.tokenType) {
             case "integerConstant":
-            case "stringConstant":
+            case "stringConstant": this.processToken(this.tokenizer.tokenType, this.currentToken()); break
             case "keyword":
+                switch (this.currentToken()) {
+                    case "true":
+                    case "false":
+                    case "null":
+                    case "this": this.processToken(this.tokenizer.tokenType, this.currentToken()); break
+                    default: throw new SyntaxError(`SyntaxError: expected keyword ['true' | 'false' | 'null' | 'this'], recieved keyword ${this.currentToken()}`)
+                }; break
             case "identifier":
-                this.processToken(this.tokenizer.tokenType, this.currentToken())
-                break
-            default: throw new SyntaxError(`SyntaxError: expected token type: intConst, string, keyword, identifier, recieved: ${this.tokenizer.tokenType}`)
+                const lookAheadToken = this.tokenizer.contents[this.tokenizer.cursor]
+                switch (lookAheadToken) {
+                    case "[":
+                        this.processToken("identifier", this.currentToken())
+                        this.processToken("symbol", "[")
+                        this.compileExpression()
+                        this.processToken("symbol", "]"); break
+                    case "(":
+                    case ".":
+                        this.compileSubroutineCall(); break
+                    default: this.processToken("identifier", this.currentToken())
+                }; break
+            case "symbol":
+                switch (this.currentToken()) {
+                    case "-":
+                    case "~":
+                        this.processToken("symbol", this.currentToken())
+                        this.compileTerm(); break
+                    case "(":
+                        this.processToken("symbol", "(")
+                        this.compileExpression()
+                        this.processToken("symbol", ")"); break
+                }; break
         }
 
         this.addNonTerminalEnd("term")
     }
-
-    /*
-    Compiles a (possibly empty) comma-separated list of expressions.
-    */
     // expressionList: "(expression(',' expression)*)?"
     compileExpressionList() {
         this.addNonTerminalStart("expressionList")
 
-        while (["identifier", "keyword"].includes(this.tokenizer.tokenType || "")) {
+        switch (this.tokenizer.tokenType) {
+            case "integerConstant":
+            case "stringConstant": this.compileExpression(); break
+            case "keyword":
+                switch (this.currentToken()) {
+                    case "true":
+                    case "false":
+                    case "null":
+                    case "this": this.compileExpression(); break
+                }; break
+            case "identifier": this.compileExpression(); break
+            case "symbol":
+                switch (this.currentToken()) {
+                    case "-":
+                    case "~":
+                    case "(": this.compileExpression(); break
+                }
+        }
+        while (this.currentToken() === ",") {
+            this.processToken("symbol", ",")
             this.compileExpression()
-            while (this.currentToken() === ",") {
-                this.processToken("symbol", ",")
-                this.compileExpression()
-            }
         }
 
         this.addNonTerminalEnd("expressionList")
     }
 }
-
-/* meta-language translation:
-    'xxx' : (bold) represent language tokens that appear verbatim (terminals)
-    xxx   : (italic) represents names of terminal and nonterminal elements
-    ()    : used for grouping
-    x | y : Either x or y
-    x y   : x is followed by y
-    x?    : x appears 0 or 1 times
-    x*    : x appears 0 or more times
-
-    The grammar consists of rules
-    Each rule consists of a left side and a right side
-    Left side specifies the rules name
-    Right side describes the rule, a pattern
-    The pattern is a left-to-right sequence consisting of terminals, nonterminals and qualifiers
-    terminals: tokens,
-    nonterminals: names of other rules
-    qualifiers: ["|", "*", "?", "(", ")"]
-
-    how can I encode LL(1)
- */
