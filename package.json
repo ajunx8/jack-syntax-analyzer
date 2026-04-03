@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/JackAnalyzer.ts",
-    "test": "vitest",
+    "test": "vitest --fileParallelism=false",
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.build.json",
     "project10": "rm -rf ./submissions && mkdir submissions && echo 'nodejs' > submissions/lang.txt && npm run build && cp dist/JackAnalyzer.js submissions && cd submissions && zip -r project10.zip *"

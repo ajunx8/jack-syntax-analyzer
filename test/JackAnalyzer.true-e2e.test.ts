@@ -17,9 +17,9 @@ import path from 'node:path'
 function compareFolders(dirA: string, dirB: string) {
     const dirAContents = readdirSync(dirA)
     const dirBContents = readdirSync(dirB)
-    
+
     expect(dirAContents).toStrictEqual(dirBContents)
-    
+
     const dirAContentsPaths = readdirSync(dirA).map(e => path.resolve(dirA, e))
     const dirBContentsPaths = readdirSync(dirB).map(e => path.resolve(dirB, e))
 
@@ -28,7 +28,7 @@ function compareFolders(dirA: string, dirB: string) {
         const entryB = dirBContentsPaths[i]
 
         if (entryA === undefined || entryB === undefined) throw new Error()
-        
+
         const stats = fs.statSync(entryA)
         if (stats.isDirectory()) {
             compareFolders(entryA, entryB)
@@ -38,7 +38,7 @@ function compareFolders(dirA: string, dirB: string) {
         const fileBContents = fs.readFileSync(entryB, 'utf8')
 
         expect(fileAContents).toStrictEqual(fileBContents)
-        console.log(`${entryA}\n${entryB}\n!matches!\n${'~'.repeat(80)}`)
+        // console.log(`${entryA}\n${entryB}\n!matches!\n${'~'.repeat(80)}`)
     }
 }
 

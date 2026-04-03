@@ -1,5 +1,4 @@
 import { type JackTokenizer } from "./JackTokenizer.js";
-import * as fs from "node:fs"
 
 export class CompilationEngine {
     tokenizer: JackTokenizer;
@@ -34,7 +33,6 @@ export class CompilationEngine {
                     default: xmlEntity = curToken
                 }
                 this.outContent += `\r\n${"  ".repeat(this.indent)}<${curtokenType}> ${xmlEntity} </${curtokenType}>`
-                fs.writeFileSync("temp.xml", this.outContent)
             } else {
                 throw new SyntaxError(`expected token: ${token}, recieved: ${curToken}`)
             }
@@ -54,12 +52,11 @@ export class CompilationEngine {
         this.indent--
         this.outContent += `\r\n${"  ".repeat(this.indent)}</${nonTerminal}>`
     }
-    // class: "'class' className '{' classVarDec* subroutineDec* '}'",
     compileClass() {
         if (this.tokenizer.hasMoreTokens()) this.tokenizer.advance();
         this.outContent += "<class>"
         this.indent++
-
+        // class: "'class' className '{' classVarDec* subroutineDec* '}'",
         this.processToken("keyword", "class")
         this.processToken("identifier", this.currentToken())
         this.processToken("symbol", "{")
@@ -72,13 +69,11 @@ export class CompilationEngine {
         this.processToken("symbol", "}")
 
         this.outContent += `\r\n</class>\r\n`
-        fs.writeFileSync("temp.xml", this.outContent)
         return
     }
-    // classVarDec: "('static' | 'field') type varName (',' varName)* ';'"
     compileClassVarDec() {
         this.addNonTerminalStart("classVarDec")
-
+        // classVarDec: "('static' | 'field') type varName (',' varName)* ';'"
         this.processToken("keyword", this.currentToken())
         this.processType()
         this.processToken("identifier", this.currentToken())
@@ -90,8 +85,8 @@ export class CompilationEngine {
 
         this.addNonTerminalEnd("classVarDec")
     }
-    // type: "'int' | 'char' | 'boolean' | className"
     processType() {
+        // type: "'int' | 'char' | 'boolean' | className"
         switch (this.tokenizer.tokenType) {
             case "identifier": this.processToken("identifier", this.currentToken()); break
             case "keyword":
@@ -104,10 +99,9 @@ export class CompilationEngine {
             default: throw new SyntaxError("missing type")
         }
     }
-    // subroutineDec: "('constructor' | 'function' | 'method') ('void' | type) subroutineName '('parameterList')' subroutineBody"
     compileSubroutine() {
         this.addNonTerminalStart("subroutineDec")
-
+        // subroutineDec: "('constructor' | 'function' | 'method') ('void' | type) subroutineName '('parameterList')' subroutineBody"
         this.processToken("keyword", this.currentToken())
         switch (this.tokenizer.tokenType) {
             case "keyword": this.processToken("keyword", 'void'); break
@@ -184,10 +178,9 @@ export class CompilationEngine {
 
         this.addNonTerminalEnd("statements")
     }
-    // letStatement: "'let' varName ('[' expression ']')? '=' expression ';'",
     compileLet() {
         this.addNonTerminalStart("letStatement")
-
+        // letStatement: "'let' varName ('[' expression ']')? '=' expression ';'",
         this.processToken("keyword", "let")
         this.processToken("identifier", this.currentToken())
         if (this.currentToken() === "[") {
