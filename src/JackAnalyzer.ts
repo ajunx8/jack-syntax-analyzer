@@ -1,7 +1,6 @@
 import { Main } from "./Main.js";
 
 // interface layer
-// deals with the OS
 export default async function run() {
     const userArg = process.argv[2];
 
